@@ -1,0 +1,11 @@
+# scripts/*.py: Python >= 3.11, standard library only, 4 spaces, 110 columns.
+line-length = 110
+target-version = "py311"
+
+[lint]
+select = ["F", "E", "W", "I", "UP", "B", "RUF", "SIM", "C4", "PIE", "PERF"]
+ignore = ["E501"]
+
+[format]
+indent-style = "space"
+quote-style = "double"

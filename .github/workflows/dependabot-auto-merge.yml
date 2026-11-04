@@ -1,0 +1,65 @@
+name: Dependabot auto-merge
+
+# This repository's own Dependabot pull requests (the odoo-nix pin and the actions' SHAs),
+# through python-devops-nix's reusable workflows, as odoo-nix's own
+# dependabot-auto-merge.yml handles its:
+#
+#   auto-merge       every one gets auto-merge (squash): GitHub merges it once `validate`, the
+#                    check the main ruleset requires, passes. One that fails stays open, such
+#                    as an odoo-nix bump that moves a resolved value until
+#                    the resolved.*.snapshot.json files are updated on purpose.
+#   update-branches  after each push to main, and daily, every open Dependabot PR that is
+#                    behind main is brought up to date through the update-branch API (a merge
+#                    of main; a conflict is left for a person). Not `@dependabot rebase`:
+#                    Dependabot ignores commands from a bot. A PR that is not behind is left
+#                    alone. Release-please's PR is not Dependabot's, so it is never touched.
+#
+# The org's "Avunu CI" GitHub App (the variable AVUNU_CI_APP_ID, or a Dependabot secret of that
+# name, and the secret AVUNU_CI_PRIVATE_KEY) enables the auto-merge and updates the branches,
+# so the merge raises a push that starts release.yml, validate.yml and update-branches, and an
+# updated branch starts its own validate run. Without it, GITHUB_TOKEN: the merge raises no
+# push, and validate.yml is dispatched on each updated branch.
+#
+# Both reusable workflows are pinned to python-devops-nix v1.2.1. Dependabot does not move
+# these pins (its github-actions entry ignores Avunu/python-devops-nix/*): they move by hand,
+# together with the org's other python-devops-nix pins, since these workflows are never run
+# by `validate` and every Dependabot PR here auto-merges once `validate` passes.
+#
+# The reusable jobs run on the org's self-hosted ["self-hosted", "nixos"] runners for any PR
+# that is not from a fork (Dependabot's are not) and on push and schedule: this repository
+# needs access to that runner group (README.md, "Before the first release").
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    # The PR's author, not github.actor (which a re-run by a person changes).
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: write # gh pr merge --auto
+      pull-requests: write # gh pr merge --auto
+    uses: Avunu/python-devops-nix/.github/workflows/dependabot-auto-merge.yml@cd817f60afd8b207ef3a36586423fcd59cce204d # v1.2.1
+    # A Dependabot run sees only Dependabot secrets: the App's ID may be one too.
+    secrets:
+      APP_ID: ${{ vars.AVUNU_CI_APP_ID || secrets.AVUNU_CI_APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.AVUNU_CI_PRIVATE_KEY }}
+
+  update-branches:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write # update-branch without the App
+      pull-requests: write # update-branch
+      actions: write # without the App, dispatch validate.yml on the new head
+    uses: Avunu/python-devops-nix/.github/workflows/dependabot-update-branches.yml@cd817f60afd8b207ef3a36586423fcd59cce204d # v1.2.1
+    with:
+      dispatch: validate.yml
+    secrets:
+      APP_ID: ${{ vars.AVUNU_CI_APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.AVUNU_CI_PRIVATE_KEY }}

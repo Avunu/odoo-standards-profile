@@ -1,0 +1,43 @@
+# Dependabot moves the two pins this repository has: the odoo-nix the validate workflow runs
+# (flake.lock) and the third-party actions' SHAs (not Avunu's reusable workflows: below).
+# Both land through a PR that the validate check gates; an odoo-nix bump that changes a
+# resolved value fails until resolved.project.snapshot.json and resolved.addons.snapshot.json
+# are updated on purpose.
+#
+# A new odoo-nix major is never proposed: taking one means widening profile.toml's
+# requires-odoo-nix (and possibly a profile major), which is a change made on purpose.
+#
+# .github/workflows/dependabot-auto-merge.yml gives every one of these PRs auto-merge, so it
+# merges once `validate` passes, and keeps them up to date with main.
+version: 2
+updates:
+  - package-ecosystem: nix
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore(deps)
+    ignore:
+      - dependency-name: odoo-nix
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore(deps)
+    # Workflow refs into Avunu/odoo-nix move with the odoo-nix pin (flake.nix and
+    # flake.lock, moved by the nix entry above), by hand. Refs into Avunu/python-devops-nix
+    # (dependabot-auto-merge.yml's reusable workflows) move by hand too, with the org's other
+    # python-devops-nix pins: `validate` never runs them, so a bump would auto-merge unreviewed.
+    ignore:
+      - dependency-name: "Avunu/odoo-nix/*"
+      - dependency-name: "Avunu/python-devops-nix/*"
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,0 +1,107 @@
+# Avunu's Odoo standards profile for odoo-nix (https://github.com/Avunu/odoo-nix).
+#
+# Repositories select it with `profile = "github:Avunu/odoo-standards-profile/v1"` in their
+# [tool.odoo-nix] table: an addon repository in nix/pyproject.toml (addons mode), a project in
+# its root pyproject.toml. The format is odoo-nix's profile schema 1 (odoo-nix
+# docs/standards/profiles.md and modules.md; the modules are odoo-nix-tools' registry). It
+# sets Avunu's organisation values and every switch the fleet relies on, so an odoo-nix
+# release that changes `recommended` can't move an Avunu repository: the frozen
+# `recommended@2.3` it extends never changes, and resolved.project.snapshot.json (with
+# resolved.addons.snapshot.json, once odoo-nix-tools reads nix/pyproject.toml) records every
+# value odoo-nix resolves from it, which the validate workflow compares on every change.
+
+schema = 1
+name = "avunu"
+description = "Avunu's Odoo standards: OCA rules with locked tools, conventional commits scoped by addon, manifest version bumps on develop with series branches, auto-merged Dependabot, repo policy, READMEs and icons."
+# 2.3 is the first odoo-nix minor that ships the standards engine (odoo-nix-tools) and the
+# frozen `recommended@2.3`. Its release tag is also the pin in flake.nix.
+extends = "recommended@2.3"
+requires-odoo-nix = ">=2.3,<3"
+
+[org]
+publisher = "Avunu LLC"
+email = "mail@avu.nu"
+copyright-holder = "Avunu LLC"
+license = "AGPL-3"                          # the Odoo manifest licence string for new addons
+github-owner = "Avunu"
+docs-url = "https://docs.avunu.net/{repo_name}/"
+dev-docs-url = "https://docs.avunu.net/odoo-nix/docs/standards/"
+repo-url = "https://github.com/{repo}"
+
+[addon-manifest]
+enable = true
+author = "Avunu LLC"                        # pylint-odoo's manifest-required-authors
+licenses-allowed = ["AGPL-3", "LGPL-3"]
+website = "https://github.com/{repo}"       # every manifest's website
+
+[ide]
+enable = true                               # off in `recommended` (taste): Odoo LS, ruff and prettier in VS Code; Pylance and ty off
+
+[commits]
+enable = true
+convention = "conventional"
+scopes = "addons"                           # one scope per addon directory, plus the extra scopes
+extra-scopes = ["ci", "deps", "docs", "main", "release", "tests"]
+allow-stacked = false                       # every pull request targets develop, no stacked PRs
+
+[releases]
+enable = true
+# Pull requests target `develop`; the series branch named in `.odoo-series` (18.0) is the one
+# repositories install from, and it only ever follows develop. After each merge to develop,
+# odoo-release.yml works out each changed addon's manifest version bump from the conventional
+# commits since the series branch (`!` -> x, feat -> y, fix/perf -> z, other types none),
+# commits `chore(release): bump <addons>` to develop with the CI App's token and, once the
+# required checks on that commit pass, fast-forwards the series branch to it. This replaces
+# the per-PR bump check, so repo-policy needs no strict status checks. It applies to addon
+# repositories only: in a project it does nothing (projects turn it off).
+branching = "develop+series"
+version-scheme = "odoo-series"              # <series>.x.y.z per addon
+
+[packaging]
+enable = true                               # a whool pyproject.toml per addon (addon repositories only), so projects consume them as uv sources
+
+[dependabot]
+enable = true
+# Every Dependabot PR merges on its own once the required checks pass; one whose checks fail
+# stays open. After each push to the integration branch, bot PRs that are behind it are
+# brought up to date, so their checks run against what they would merge into.
+auto-merge = true
+auto-merge-policy = "all"
+update-branches = true
+
+[ci]
+enable = true
+# The Linux jobs of odoo-nix's reusable workflows run on the fleet's self-hosted NixOS
+# runner. Pull requests from forks still run on ubuntu-latest.
+runs-on = ["self-hosted", "nixos"]
+
+# The "Avunu CI" GitHub App: the release bump commit, the series fast-forward and auto-merge
+# use its token, so what they push starts CI. Names, not values: the org Actions variable
+# that holds the App's client ID, and the org Actions secret with its private key.
+[ci.github-app]
+app-id = "AVUNU_CI_APP_ID"
+private-key = "AVUNU_CI_PRIVATE_KEY"
+
+[repo-policy]
+enable = true                               # needs a public repository (GitHub Free answers 403 for rulesets on private ones)
+required-approvals = 0
+# BEFORE FIRST RELEASE: the release ruleset must let the CI App push the bump commit and
+# fast-forward the series branch. Its bypass actor is the App's numeric id (the App's
+# settings page), which is not the client ID that AVUNU_CI_APP_ID holds:
+#   release-bypass = "integration:<numeric App id>"
+# Until that line is set, the default `github-actions` stands and `odoo-nix repo doctor`
+# reports repo-policy.release-bypass as missing on every addon repository.
+
+[readme]
+enable = true
+addons-table = false                        # each addon repository keeps its own hand-written root README
+
+[icons]
+enable = true
+# `odoo-nix check icons --fix` copies <profile>/assets/addon-icon.png (the default src-icon)
+# into each addon that has none. BEFORE FIRST RELEASE: that file is not in this repository
+# yet; without it `check icons` still checks the icons, and only `--fix` refuses (exit 2).
+
+[[retire]]                                  # the addon repositories' stopgap release flow, replaced by [releases] above
+paths = [".github/workflows/mirror.yml"]
+module = "releases"

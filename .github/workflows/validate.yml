@@ -1,0 +1,132 @@
+name: validate
+
+# Every change to this profile, and the odoo-nix it runs against:
+#
+#   validate  the odoo-nix flake.lock pins: workflow, Nix, shell and Python lint, then
+#             scripts/check.sh (profile validate; for odoo-nix's standards-project and
+#             standards-addons fixtures, the resolved configuration against
+#             resolved.<shape>.snapshot.json and an offline sync; fleet.json against
+#             odoo-nix's fleet schema and scripts/check_fleet.py). The addons fixture is
+#             skipped, with a warning, while odoo-nix-tools can't read nix/pyproject.toml and
+#             no resolved.addons.snapshot.json is committed.
+#             The `validate` check the main ruleset requires (repo-policy/rulesets/main.json).
+#   latest    the same checks against the newest odoo-nix release the profile's
+#             requires-odoo-nix range allows (at or above its floor, below its upper bound),
+#             so a release that would change any of our values fails here before
+#             `odoo-nix repo rollout` takes it to the repositories. Options that release adds,
+#             which the snapshots of the pinned odoo-nix can't have, are notices, not
+#             failures, unless one is a module that resolves on (check.sh --additive).
+#             Skipped, with a notice, while no release falls in that range.
+#
+# The weekly schedule runs `latest` against new odoo-nix releases between our own changes.
+# release.yml dispatches this workflow on its release PR, which GITHUB_TOKEN opened.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FORCE_COLOR: "1"
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          determinate: false
+
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Lint workflows, Nix and scripts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          nix develop -c actionlint
+          nix develop -c zizmor .github/workflows .github/dependabot.yml
+          nix develop -c nixfmt --check flake.nix
+          nix develop -c shellcheck scripts/*.sh
+          nix develop -c ruff check --no-cache scripts
+          nix develop -c ruff format --no-cache --check scripts
+
+      - name: Check the profile against the pinned odoo-nix
+        run: scripts/check.sh
+
+  latest:
+    name: latest odoo-nix release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Find the newest odoo-nix release the profile allows
+        id: release
+        run: |
+          set -euo pipefail
+          # requires-odoo-nix = ">=<major>.<minor>,<<max>": releases at or above the floor and
+          # below the upper bound's major, e.g. ">=2.3,<3" allows v2.3.0 up to the last v2.
+          range="$(sed -nE 's/^requires-odoo-nix = "(.*)".*/\1/p' profile.toml)"
+          floor="$(sed -nE 's/^>=([0-9]+\.[0-9]+).*/\1/p' <<< "$range")"
+          max="$(sed -nE 's/.*<([0-9]+)$/\1/p' <<< "$range")"
+          if [ -z "$floor" ] || [ -z "$max" ]; then
+            echo "::error::cannot read requires-odoo-nix (\"$range\") as \">=X.Y,<Z\""
+            exit 1
+          fi
+          tag="$(git ls-remote --tags --refs https://github.com/Avunu/odoo-nix 'refs/tags/v*' |
+            sed 's#.*refs/tags/##' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+            awk -F'[v.]' -v floor="$floor" -v max="$max" '
+              BEGIN { split(floor, f, ".") }
+              $2 < max && ($2 > f[1] || ($2 == f[1] && $3 >= f[2]))' |
+            sort -V | tail -n 1 || true)"
+          if [ -z "$tag" ]; then
+            echo "::notice::no odoo-nix release falls in requires-odoo-nix ($range); the pinned build is checked by the validate job"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        if: steps.release.outputs.tag != ''
+        with:
+          determinate: false
+
+      - uses: DeterminateSystems/magic-nix-cache-action@84c0677f58dcedf3b91f8223ce36a9ea5b3c84b7 # v15
+        if: steps.release.outputs.tag != ''
+        with:
+          diagnostic-endpoint: ""
+          use-flakehub: false
+
+      - name: Check the profile against ${{ steps.release.outputs.tag }}
+        if: steps.release.outputs.tag != ''
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          ref="github:Avunu/odoo-nix/$TAG"
+          nix build "$ref#odoo-nix" --out-link "$RUNNER_TEMP/odoo-nix"
+          src="$(nix flake prefetch --json "$ref" | jq -r .storePath)"
+          ODOO_NIX="$RUNNER_TEMP/odoo-nix/bin/odoo-nix" ODOO_NIX_SRC="$src" scripts/check.sh --additive
