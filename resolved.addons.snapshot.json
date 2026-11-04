@@ -1,0 +1,190 @@
+{
+  "profile": {
+    "name": "avunu",
+    "source": "github:Avunu/odoo-standards-profile/v1",
+    "rev": ""
+  },
+  "modules": {
+    "dev-shell": true,
+    "editorconfig": true,
+    "python-lint": true,
+    "pylint-odoo": true,
+    "addon-manifest": true,
+    "js-xml": true,
+    "ide": true,
+    "tests": true,
+    "workflow-lint": true,
+    "shell-lint": true,
+    "nix-lint": true,
+    "hygiene": true,
+    "commits": true,
+    "releases": true,
+    "packaging": true,
+    "dependabot": true,
+    "ci": true,
+    "repo-policy": true,
+    "readme": true,
+    "icons": true
+  },
+  "config": {
+    "org": {
+      "publisher": "Avunu LLC",
+      "email": "mail@avu.nu",
+      "copyright-holder": "Avunu LLC",
+      "license": "AGPL-3",
+      "github-owner": "Avunu",
+      "docs-url": "https://docs.avunu.net/{repo_name}/",
+      "dev-docs-url": "https://docs.avunu.net/odoo-nix/docs/standards/",
+      "support-url": "",
+      "repo-url": "https://github.com/{repo}"
+    },
+    "dev-shell": {
+      "enable": true,
+      "odoo-nix-url": ""
+    },
+    "editorconfig": {
+      "enable": true
+    },
+    "python-lint": {
+      "enable": true,
+      "extra-select": [],
+      "ignore": [],
+      "per-file-ignores": {},
+      "extend-exclude": []
+    },
+    "pylint-odoo": {
+      "enable": true,
+      "optional-run": true
+    },
+    "addon-manifest": {
+      "enable": true,
+      "author": "Avunu LLC",
+      "licenses-allowed": [
+        "AGPL-3",
+        "LGPL-3"
+      ],
+      "website": "https://github.com/{repo}"
+    },
+    "js-xml": {
+      "enable": true,
+      "exclude": []
+    },
+    "ide": {
+      "enable": true
+    },
+    "tests": {
+      "enable": true,
+      "initial-floor": 0,
+      "goal": 80,
+      "checklog": true
+    },
+    "workflow-lint": {
+      "enable": true
+    },
+    "shell-lint": {
+      "enable": true
+    },
+    "nix-lint": {
+      "enable": true
+    },
+    "hygiene": {
+      "enable": true,
+      "forbid-contributing": true
+    },
+    "commits": {
+      "enable": true,
+      "convention": "conventional",
+      "scopes": "addons",
+      "extra-scopes": [
+        "ci",
+        "deps",
+        "docs",
+        "main",
+        "release",
+        "tests"
+      ],
+      "extra-types": [],
+      "allow-stacked": false,
+      "pr-allowed-bases": [],
+      "subject-length": 100
+    },
+    "releases": {
+      "enable": true,
+      "branching": "develop+series",
+      "version-scheme": "odoo-series",
+      "tag-prefix": "v"
+    },
+    "packaging": {
+      "enable": true
+    },
+    "dependabot": {
+      "enable": true,
+      "auto-merge": true,
+      "auto-merge-policy": "all",
+      "update-branches": true,
+      "schedule": "weekly",
+      "cooldown-days": 7,
+      "target-branches": [
+        "develop",
+        "17.0"
+      ]
+    },
+    "ci": {
+      "enable": true,
+      "runs-on": [
+        "self-hosted",
+        "nixos"
+      ],
+      "test-timeout-minutes": 60,
+      "project-update": "0 6 * * 1",
+      "github-app": {
+        "app-id": "AVUNU_CI_APP_ID",
+        "private-key": "AVUNU_CI_PRIVATE_KEY"
+      },
+      "schedules": {}
+    },
+    "repo-policy": {
+      "enable": true,
+      "required-approvals": 0,
+      "require-code-owner-review": false,
+      "required-checks": "gates",
+      "release-bypass": "github-actions",
+      "secret-scanning": true,
+      "merge-methods": [
+        "squash"
+      ],
+      "require-thread-resolution": true,
+      "delete-branch-on-merge": true,
+      "manage-default-branch": true,
+      "manage-features": true
+    },
+    "readme": {
+      "enable": true,
+      "addons-table": false,
+      "required": true
+    },
+    "icons": {
+      "enable": true,
+      "min-size": 128,
+      "max-bytes": 102400,
+      "src-icon": "assets/addon-icon.png"
+    },
+    "retire": [
+      {
+        "paths": [
+          ".github/workflows/mirror.yml"
+        ],
+        "module": "releases"
+      }
+    ],
+    "profile": "github:Avunu/odoo-standards-profile/v1",
+    "schema": 1,
+    "extra-files": [],
+    "retire-keep": [],
+    "untested": [],
+    "integration-branch": "develop",
+    "shape": "addons",
+    "series": "18.0",
+    "repo": "Avunu/fixture-addons"
+  }
+}

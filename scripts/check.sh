@@ -16,10 +16,9 @@
 #      rules odoo-nix doesn't know (scripts/check_fleet.py).
 #
 # The [tool.odoo-nix] table is in pyproject.toml in a project and in nix/pyproject.toml in an
-# addon repository. An odoo-nix-tools without the core's per-checkout config file (CR1) reads
-# only the root one and reports the addons fixture as not opted in: while no
-# resolved.addons.snapshot.json is committed, that fixture is then skipped with a warning. Once
-# it is committed, the addons fixture is required.
+# addon repository. Both snapshots are committed, so both fixtures are required; an engine that
+# reports the addons fixture as not opted in fails here (ODOO_NIX_SKIP_ADDONS=1 skips it on
+# purpose).
 #
 # Usage: scripts/check.sh [--update | --additive]
 #   --update    rewrite resolved.project.snapshot.json and resolved.addons.snapshot.json

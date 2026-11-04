@@ -35,7 +35,7 @@ The profile format, the modules and the merge order are documented in odoo-nix's
 | [`profile.toml`](profile.toml) | The profile. It extends odoo-nix's frozen `recommended@2.3` snapshot and sets Avunu's values and every switch the fleet relies on, so an odoo-nix release that changes `recommended` can't move an Avunu repository. |
 | [`fleet.json`](fleet.json) | The Avunu fleet: the public addon repositories that `odoo-nix repo apply\|audit\|rollout\|targets --all --fleet fleet.json` iterate, each with its shape, its `branches` (`["develop", "18.0"]`: the integration branch first, then the series branch), whether it is private and its documentation URL (the repository homepage `repo apply` sets; not published yet, see [Before the first release](#before-the-first-release)). Client deployments are never listed here. |
 | [`resolved.project.snapshot.json`](resolved.project.snapshot.json) | The resolved configuration (`odoo-nix profile show --format json`) of odoo-nix's `standards-project` fixture under this profile. CI compares against it, so any change to a resolved value, from this repository or from odoo-nix, is a reviewed diff. Against the newest allowed odoo-nix release, CI accepts options that release adds beyond the pinned one, and fails on any value that moves or any new module that is on. |
-| `resolved.addons.snapshot.json` | The same for the `standards-addons` fixture: odoo-nix derives part of the configuration from the shape, so each shape has its own snapshot. Not committed yet (see [Before the first release](#before-the-first-release)). |
+| [`resolved.addons.snapshot.json`](resolved.addons.snapshot.json) | The same for the `standards-addons` fixture: odoo-nix derives part of the configuration from the shape, so each shape has its own snapshot. |
 | [`scripts/check.sh`](scripts/check.sh) | The checks CI runs: `odoo-nix profile validate`; for each fixture, the snapshot comparison (with [`scripts/compare_snapshot.py`](scripts/compare_snapshot.py) for the newest release) and an offline `odoo-nix sync --write` then `--check` with this profile; then `fleet.json`, against odoo-nix's fleet schema and the rules in [`scripts/check_fleet.py`](scripts/check_fleet.py). |
 | [`flake.nix`](flake.nix) | Pins the odoo-nix the checks run against (the `v2.3.0` tag). Dependabot moves it within the major. `flake.lock` is added once that tag exists: until then the flake cannot be locked. |
 | [`repo-policy/`](repo-policy) | This repository's own settings and rulesets, for `odoo-nix repo apply --policy-dir repo-policy Avunu/odoo-standards-profile` (`--dry-run` first shows the changes). |
@@ -208,14 +208,34 @@ profile whose range excludes the running odoo-nix.
    An odoo-nix-tools older than 2.3.0 is such a development build: the checks then read
    `profile.toml` without its `requires-odoo-nix` line, with a warning. That workaround
    exists only until odoo-nix 2.3.0 is tagged and locked, and is removed then (see
-   [Before the first release](#before-the-first-release), item 1). One that can't read
-   `[tool.odoo-nix]` from `nix/pyproject.toml` yet skips the addons fixture with a warning,
-   as long as no `resolved.addons.snapshot.json` is committed; `ODOO_NIX_SKIP_ADDONS=1`
-   skips it on purpose.
+   [Before the first release](#before-the-first-release), item 1). `ODOO_NIX_SKIP_ADDONS=1`
+   skips the addons fixture on purpose, with a warning.
 
    To try the profile on a real repository before publishing, run
    `nix run --no-pure-eval .#odoo-init -- --sync --profile-path ../odoo-standards-profile`
-   in that repository's checkout (and don't commit the result).
+   in that repository's checkout (and don't commit the result). `--profile-path` changes
+   only where the profile is read from: the first sync still locks the `standards-profile`
+   input from `github:Avunu/odoo-standards-profile/v1`, which fails (exit 3, a 404) until
+   this repository is published. Lock it from the local clone by hand first, then put the
+   node's `original` back to the GitHub URL, so the sync finds the lock it expects:
+
+   ```sh
+   # writes the table and the flake.nix inputs block, then exits 3 at the lock; a checkout
+   # that has not opted in has no .#odoo-init of its own, so this uses odoo-nix's
+   nix run github:Avunu/odoo-nix#odoo-init -- --standards github:Avunu/odoo-standards-profile/v1 \
+     --profile-path ../odoo-standards-profile
+   nix flake lock --override-input standards-profile \
+     "git+file://$(realpath ../odoo-standards-profile)"
+   node='.nodes[.nodes.root.inputs["standards-profile"]].original'
+   jq "$node = {type: \"github\", owner: \"Avunu\", repo: \"odoo-standards-profile\", ref: \"v1\"}" \
+     flake.lock > flake.lock.new && mv flake.lock.new flake.lock
+   nix run --no-pure-eval .#odoo-init -- --sync --profile-path ../odoo-standards-profile
+   ```
+
+   The lock takes the clone's committed `HEAD`; `--profile-path` reads the working tree. A
+   checkout already opted in to another profile refuses `--standards` (exit 2): set
+   `profile = "github:Avunu/odoo-standards-profile/v1"` in its table instead and start at
+   the `nix flake lock` line.
 3. Open a PR with a conventional-commit title (`feat:`, `fix:`, `chore:` …). The `validate`
    check must pass.
 
@@ -232,40 +252,36 @@ This repository is a draft until these are done, in this order:
    under [Changing the profile](#changing-the-profile): against a locked release in range it
    never runs, and left in place it could only hide an `ODOO_NIX` that points at the wrong
    build. From then on an engine outside `requires-odoo-nix` fails `profile validate`.
-2. **The addons snapshot.** Once odoo-nix-tools reads `[tool.odoo-nix]` from
-   `nix/pyproject.toml` (the standards core's per-checkout config file, change request CR1),
-   `scripts/check.sh --update` writes `resolved.addons.snapshot.json`; commit it, and the
-   addons fixture is required from then on.
-3. **The CI App's numeric id.** Set `release-bypass = "integration:<id>"` in `profile.toml`'s
+2. **The CI App's numeric id.** Set `release-bypass = "integration:<id>"` in `profile.toml`'s
    `[repo-policy]`, with the "Avunu CI" App's numeric App id from its settings page (not the
    client ID in `AVUNU_CI_APP_ID`). Without it the release ruleset doesn't let the App push
    the bump commit or fast-forward the series branch, and `odoo-nix repo doctor` reports it
    missing.
-4. **The addon icon.** Add the Avunu addon icon as `assets/addon-icon.png` (square, at least
+3. **The addon icon.** Add the Avunu addon icon as `assets/addon-icon.png` (square, at least
    128 px, at most 100 KB). Until then `odoo-nix check icons` still checks every addon's
    icon, but `check icons --fix` refuses (exit 2).
-5. **The GitHub repository.** Create `Avunu/odoo-standards-profile` (public, so consumers
+4. **The GitHub repository.** Create `Avunu/odoo-standards-profile` (public, so consumers
    need no fetch token), push `main`, and have an admin run
    `odoo-nix repo apply --policy-dir repo-policy Avunu/odoo-standards-profile` (with
    `--dry-run` first to see the changes). That
    requires a PR and the `validate` check on `main`, lets only GitHub Actions move `v*`
    branches, and protects `v*` tags. Until then, the release workflow needs the setting
    "Allow GitHub Actions to create and approve pull requests" (Settings → Actions → General).
-6. **The self-hosted runners.** Give `Avunu/odoo-standards-profile` access to the org's
+5. **The self-hosted runners.** Give `Avunu/odoo-standards-profile` access to the org's
    self-hosted `["self-hosted", "nixos"]` runner group (Organization settings → Actions →
    Runner groups). `dependabot-auto-merge.yml`'s python-devops-nix reusable workflows run
    there for every pull request that is not from a fork, Dependabot's included, and on push
    and schedule; without access those jobs queue and never start.
-7. **The documentation pages.** Publish `https://docs.avunu.net/<repo>/` for each repository
+6. **The documentation pages.** Publish `https://docs.avunu.net/<repo>/` for each repository
    in `fleet.json`, and the standards page `profile.toml`'s `[org] dev-docs-url` names
    (`https://docs.avunu.net/odoo-nix/docs/standards/`). All of them return 404 today. Each
    fleet entry's `documentation` becomes that repository's homepage through
    `odoo-nix repo apply`, so run no `repo apply --all --fleet fleet.json` before they are
    live, or the fleet's public repositories get a broken homepage.
-8. **The `v1` branch.** Merge the first release PR: release-please tags `v1.0.0` and the
+7. **The `v1` branch.** Merge the first release PR: release-please tags `v1.0.0` and the
    release workflow creates `v1` at it. Only then can repositories select
    `github:Avunu/odoo-standards-profile/v1`.
-9. **The fleet audit** (optional, after the tag): add the caller below.
+8. **The fleet audit** (optional, after the tag): add the caller below.
 
 `Avunu/odoo-studio` and `Avunu/odoo-carbon-ui` join `fleet.json` once they are public.
 
