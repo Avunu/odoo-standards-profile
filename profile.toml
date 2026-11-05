@@ -96,9 +96,14 @@ addons-table = false                        # each addon repository keeps its ow
 
 [icons]
 enable = true
-# `odoo-nix check icons --fix` copies <profile>/assets/addon-icon.png (the default src-icon)
-# into each addon that has none. BEFORE FIRST RELEASE: that file is not in this repository
-# yet; without it `check icons` still checks the icons, and only `--fix` refuses (exit 2).
+# Each fleet repository has its own icon, shared by all of its addons: the Avunu purple tile
+# with a white glyph, in assets/icons/ as <repo>.png (256 px, what each addon commits as
+# static/description/icon.png), <repo>.svg (the same tile, committed as
+# static/description/icon.svg) and <repo>-symbolic.svg (the 32 px glyph in currentColor, the
+# source of both). A repository points `odoo-nix check icons --fix` at its own icon in its
+# [tool.odoo-nix.icons] table: src-icon = "assets/icons/<repo>.png". The default src-icon
+# (assets/addon-icon.png) does not exist here, so in a repository that sets none, `--fix`
+# refuses (exit 2) and `check icons` still checks the icons.
 
 [[retire]]                                  # the addon repositories' stopgap release flow, replaced by [releases] above
 paths = [".github/workflows/mirror.yml"]
