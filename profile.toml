@@ -85,12 +85,10 @@ private-key = "AVUNU_CI_PRIVATE_KEY"
 [repo-policy]
 enable = true                               # needs a public repository (GitHub Free answers 403 for rulesets on private ones)
 required-approvals = 0
-# BEFORE FIRST RELEASE: the release ruleset must let the CI App push the bump commit and
-# fast-forward the series branch. Its bypass actor is the App's numeric id (the App's
-# settings page), which is not the client ID that AVUNU_CI_APP_ID holds:
-#   release-bypass = "integration:<numeric App id>"
-# Until that line is set, the default `github-actions` stands and `odoo-nix repo doctor`
-# reports repo-policy.release-bypass as missing on every addon repository.
+# The release ruleset lets the "Avunu CI" App push the bump commit and fast-forward the series
+# branch. Its bypass actor is the App's numeric id (the App's settings page), which is not the
+# client ID that AVUNU_CI_APP_ID holds.
+release-bypass = "integration:5543811"
 
 [readme]
 enable = true
