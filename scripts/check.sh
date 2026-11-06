@@ -35,20 +35,10 @@
 #                         tests/fixtures/ (default: the one flake.lock pins)
 #   ODOO_NIX_SKIP_ADDONS  1: skip the standards-addons fixture, with a warning, even when its
 #                         snapshot is committed
-#
-# Before odoo-nix 2.3.0 exists, an odoo-nix-tools build reports 2.2.0 (the last release
-# without the standards engine), which profile.toml's `requires-odoo-nix` floor of 2.3 would
-# exclude (exit 3). Against such an unreleased build the checks run on a copy without that
-# one line, with a warning; against any release the file is checked exactly as committed.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
-
-# The first odoo-nix release with the standards engine: any odoo-nix-tools below it is a
-# development build (see above). Remove this and the branch below once flake.lock pins
-# v2.3.0 (README.md, "Before the first release", item 1).
-first_release=2.3.0
 
 update=0
 additive=0
@@ -71,20 +61,10 @@ trap 'chmod -R u+w "$work" 2>/dev/null; rm -rf "$work"' EXIT
 if [ -n "${ODOO_NIX:-}" ]; then
   read -r -a odoo_nix <<< "$ODOO_NIX"
 else
-  [ -f flake.lock ] || {
-    echo "error: no flake.lock: the odoo-nix release flake.nix pins is not locked yet." >&2
-    echo "Set ODOO_NIX (and ODOO_NIX_SRC) to a development build; see README.md." >&2
-    exit 2
-  }
   nix build .#odoo-nix --out-link "$work/odoo-nix"
   odoo_nix=("$work/odoo-nix/bin/odoo-nix")
 fi
 if [ -z "${ODOO_NIX_SRC:-}" ]; then
-  [ -f flake.lock ] || {
-    echo "error: no flake.lock: the odoo-nix release flake.nix pins is not locked yet." >&2
-    echo "Set ODOO_NIX_SRC (with ODOO_NIX) to a development checkout; see README.md." >&2
-    exit 2
-  }
   ODOO_NIX_SRC="$(nix eval --raw .#lib.odoo-nix-src)"
 fi
 fixtures="$ODOO_NIX_SRC/tests/fixtures"
@@ -112,12 +92,7 @@ echo "odoo-nix-tools $version (fixtures from $ODOO_NIX_SRC)"
 # The profile directory every check reads: profile.toml, templates/ and assets/.
 profile="$work/profile"
 mkdir -p "$profile"
-if [ "$(printf '%s\n' "$version" "$first_release" | sort -V | head -n 1)" != "$first_release" ]; then
-  note warning "odoo-nix-tools $version is a development build before $first_release: checking profile.toml without its requires-odoo-nix line"
-  grep -v '^requires-odoo-nix[[:space:]]*=' profile.toml > "$profile/profile.toml"
-else
-  cp profile.toml "$profile/profile.toml"
-fi
+cp profile.toml "$profile/profile.toml"
 for dir in templates assets; do
   if [ -d "$dir" ]; then
     cp -r "$dir" "$profile/$dir"

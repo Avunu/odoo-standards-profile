@@ -85,12 +85,10 @@ private-key = "AVUNU_CI_PRIVATE_KEY"
 [repo-policy]
 enable = true                               # needs a public repository (GitHub Free answers 403 for rulesets on private ones)
 required-approvals = 0
-# BEFORE FIRST RELEASE: the release ruleset must let the CI App push the bump commit and
-# fast-forward the series branch. Its bypass actor is the App's numeric id (the App's
-# settings page), which is not the client ID that AVUNU_CI_APP_ID holds:
-#   release-bypass = "integration:<numeric App id>"
-# Until that line is set, the default `github-actions` stands and `odoo-nix repo doctor`
-# reports repo-policy.release-bypass as missing on every addon repository.
+# The release ruleset lets the "Avunu CI" App push the bump commit and fast-forward the series
+# branch. Its bypass actor is the App's numeric id (the App's settings page), which is not the
+# client ID that AVUNU_CI_APP_ID holds.
+release-bypass = "integration:5543811"
 
 [readme]
 enable = true
@@ -98,9 +96,14 @@ addons-table = false                        # each addon repository keeps its ow
 
 [icons]
 enable = true
-# `odoo-nix check icons --fix` copies <profile>/assets/addon-icon.png (the default src-icon)
-# into each addon that has none. BEFORE FIRST RELEASE: that file is not in this repository
-# yet; without it `check icons` still checks the icons, and only `--fix` refuses (exit 2).
+# Each fleet repository has its own icon, shared by all of its addons: the Avunu purple tile
+# with a white glyph, in assets/icons/ as <repo>.png (256 px, what each addon commits as
+# static/description/icon.png), <repo>.svg (the same tile, committed as
+# static/description/icon.svg) and <repo>-symbolic.svg (the 32 px glyph in currentColor, the
+# source of both). A repository points `odoo-nix check icons --fix` at its own icon in its
+# [tool.odoo-nix.icons] table: src-icon = "assets/icons/<repo>.png". The default src-icon
+# (assets/addon-icon.png) does not exist here, so in a repository that sets none, `--fix`
+# refuses (exit 2) and `check icons` still checks the icons.
 
 [[retire]]                                  # the addon repositories' stopgap release flow, replaced by [releases] above
 paths = [".github/workflows/mirror.yml"]
