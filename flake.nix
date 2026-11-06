@@ -10,11 +10,6 @@
   # It pins the release named by profile.toml's `requires-odoo-nix` lower bound, and the
   # validate workflow's `latest` job covers the newest release the range allows.
   inputs = {
-    # v2.3.0, the first odoo-nix release that ships the standards engine, is not tagged yet,
-    # so this flake can't be locked and no flake.lock is committed. Until then
-    # scripts/check.sh runs against a development build (ODOO_NIX, ODOO_NIX_SRC; README.md).
-    # Once the tag exists, run `nix flake lock` and commit flake.lock (if the release is
-    # another minor, move this pin, profile.toml's `extends` and `requires-odoo-nix` with it).
     odoo-nix.url = "github:Avunu/odoo-nix/v2.3.0";
     nixpkgs.follows = "odoo-nix/nixpkgs";
   };
