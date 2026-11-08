@@ -12,11 +12,12 @@
 
 schema = 1
 name = "avunu"
-description = "Avunu's Odoo standards: OCA rules with locked tools, conventional commits scoped by addon, manifest version bumps on develop with series branches, auto-merged Dependabot, repo policy, READMEs and icons."
+description = "Avunu's Odoo standards: OCA rules with locked tools, conventional commits scoped by addon, series branches with per-addon release-please releases (tags, zips and wheels), auto-merged Dependabot, repo policy, READMEs and icons."
 # 2.3 is the first odoo-nix minor that ships the standards engine (odoo-nix-tools) and the
-# frozen `recommended@2.3`. Its release tag is also the pin in flake.nix.
+# frozen `recommended@2.3`; 2.4 the series release flow this profile uses. The lower bound's
+# release tag is also the pin in flake.nix.
 extends = "recommended@2.3"
-requires-odoo-nix = ">=2.3,<3"
+requires-odoo-nix = ">=2.4,<3"
 
 [org]
 publisher = "Avunu LLC"
@@ -42,19 +43,18 @@ enable = true
 convention = "conventional"
 scopes = "addons"                           # one scope per addon directory, plus the extra scopes
 extra-scopes = ["ci", "deps", "docs", "main", "release", "tests"]
-allow-stacked = false                       # every pull request targets develop, no stacked PRs
+allow-stacked = false                       # every pull request targets a series branch, no stacked PRs
 
 [releases]
 enable = true
-# Pull requests target `develop`; the series branch named in `.odoo-series` (18.0) is the one
-# repositories install from, and it only ever follows develop. After each merge to develop,
-# odoo-release.yml works out each changed addon's manifest version bump from the conventional
-# commits since the series branch (`!` -> x, feat -> y, fix/perf -> z, other types none),
-# commits `chore(release): bump <addons>` to develop with the CI App's token and, once the
-# required checks on that commit pass, fast-forwards the series branch to it. This replaces
-# the per-PR bump check, so repo-policy needs no strict status checks. It applies to addon
-# repositories only: in a project it does nothing (projects turn it off).
-branching = "develop+series"
+# Each series branch (18.0, 19.0, ...) is its own integration branch: pull requests go to the
+# series they are for, so series are developed in parallel. A release is a tag. release-please
+# keeps one release PR open per series with each changed addon's next version (from the
+# conventional commits that touch it: `!` -> x, feat -> y, fix/perf -> z, other types none) and
+# its CHANGELOG.md; merging it tags each addon `<addon>-<series>.x.y.z` and publishes a GitHub
+# release carrying the addon's zip (unpack into an addons path) and wheel. Addon repositories
+# only: projects turn releases off.
+branching = "series"
 version-scheme = "odoo-series"              # <series>.x.y.z per addon
 
 [packaging]

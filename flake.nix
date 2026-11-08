@@ -10,7 +10,7 @@
   # It pins the release named by profile.toml's `requires-odoo-nix` lower bound, and the
   # validate workflow's `latest` job covers the newest release the range allows.
   inputs = {
-    odoo-nix.url = "github:Avunu/odoo-nix/v2.3.0";
+    odoo-nix.url = "github:Avunu/odoo-nix/v2.4.0";
     nixpkgs.follows = "odoo-nix/nixpkgs";
   };
 

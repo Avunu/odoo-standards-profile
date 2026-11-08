@@ -8,10 +8,10 @@ can't say about the Avunu fleet:
 
 - no repository is listed twice (GitHub compares names case-insensitively);
 - the top-level `profile` is this repository's v1 branch;
-- the branches follow the release flow `develop+series`: the integration branch is
+- the branches follow the release flow `series`: the integration branch is
   `integration_branch` when set, else `branches[0]`, and is one of `branches`; in an addon
-  repository it is not a series branch, every other branch is one (`<major>.0`), and there is
-  at least one; a project has exactly one branch;
+  repository every branch is a series branch (`<major>.0`), each its own integration branch,
+  and there is at least one; a project has exactly one branch;
 - no branch is listed twice;
 - repositories outside the profile's [org] github-owner are reported, as notices.
 
@@ -41,16 +41,13 @@ def check_entry(where: str, entry: dict) -> list[str]:
     if integration not in branches:
         errors.append(f"{where}: the integration branch {integration!r} is not one of branches")
     if shape == "addons":
-        if SERIES.match(integration):
-            errors.append(
-                f"{where}: the integration branch {integration!r} is a series branch;"
-                " pull requests go to develop, and the series branch follows it"
-            )
-        series = [b for b in branches if b != integration]
         errors.extend(
-            f"{where}: series branch {name!r} is not <major>.0" for name in series if not SERIES.match(name)
+            f"{where}: branch {name!r} is not a series branch (<major>.0): under the series"
+            " release flow every branch is one, and pull requests go to the series they are for"
+            for name in branches
+            if not SERIES.match(name)
         )
-        if not series:
+        if not branches:
             errors.append(f"{where}: an addon repository needs at least one series branch")
     elif shape == "project" and len(branches) != 1:
         errors.append(f"{where}: a project has exactly one branch, its integration branch")
