@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Avunu/odoo-standards-profile/compare/v1.0.0...v1.1.0) (2026-11-08)
+
+
+### Features
+
+* release each addon with release-please on parallel series branches ([#3](https://github.com/Avunu/odoo-standards-profile/issues/3)) ([1df0d6c](https://github.com/Avunu/odoo-standards-profile/commit/1df0d6cb5f1cd67635e8c3ea47dd0736d74cd95c))
+
 ## 1.0.0 (2026-11-06)
 
 
