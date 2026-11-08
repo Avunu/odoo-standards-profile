@@ -110,9 +110,10 @@
     },
     "releases": {
       "enable": true,
-      "branching": "develop+series",
+      "branching": "series",
       "version-scheme": "odoo-series",
-      "tag-prefix": "v"
+      "tag-prefix": "v",
+      "build": {}
     },
     "packaging": {
       "enable": true
@@ -182,7 +183,7 @@
     "extra-files": [],
     "retire-keep": [],
     "untested": [],
-    "integration-branch": "develop",
+    "integration-branch": "18.0",
     "shape": "addons",
     "series": "18.0",
     "repo": "Avunu/fixture-addons"

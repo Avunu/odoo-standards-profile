@@ -5,70 +5,70 @@
     {
       "repo": "Avunu/ai-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/ai-addons/"
     },
     {
       "repo": "Avunu/edi-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/edi-addons/"
     },
     {
       "repo": "Avunu/fleet-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/fleet-addons/"
     },
     {
       "repo": "Avunu/mail-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/mail-addons/"
     },
     {
       "repo": "Avunu/repair-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/repair-addons/"
     },
     {
       "repo": "Avunu/server-tools-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/server-tools-addons/"
     },
     {
       "repo": "Avunu/shopfloor-app-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/shopfloor-app-addons/"
     },
     {
       "repo": "Avunu/timesheet-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/timesheet-addons/"
     },
     {
       "repo": "Avunu/vertical-auto-repair-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/vertical-auto-repair-addons/"
     },
     {
       "repo": "Avunu/web-addons",
       "shape": "addons",
-      "branches": ["develop", "18.0"],
+      "branches": ["18.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/web-addons/"
     }

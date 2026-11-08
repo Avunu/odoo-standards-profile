@@ -33,11 +33,11 @@ The profile format, the modules and the merge order are documented in odoo-nix's
 | Path | What it is |
 | --- | --- |
 | [`profile.toml`](profile.toml) | The profile. It extends odoo-nix's frozen `recommended@2.3` snapshot and sets Avunu's values and every switch the fleet relies on, so an odoo-nix release that changes `recommended` can't move an Avunu repository. |
-| [`fleet.json`](fleet.json) | The Avunu fleet: the public addon repositories that `odoo-nix repo apply\|audit\|rollout\|targets --all --fleet fleet.json` iterate, each with its shape, its `branches` (`["develop", "18.0"]`: the integration branch first, then the series branch), whether it is private and its documentation URL (the repository homepage `repo apply` sets; not published yet, see [Before the first release](#before-the-first-release)). Client deployments are never listed here. |
+| [`fleet.json`](fleet.json) | The Avunu fleet: the public addon repositories that `odoo-nix repo apply\|audit\|rollout\|targets --all --fleet fleet.json` iterate, each with its shape, its `branches` (`["18.0"]`: its series branches, each its own integration branch), whether it is private and its documentation URL (the repository homepage `repo apply` sets; not published yet, see [Before the first release](#before-the-first-release)). Client deployments are never listed here. |
 | [`resolved.project.snapshot.json`](resolved.project.snapshot.json) | The resolved configuration (`odoo-nix profile show --format json`) of odoo-nix's `standards-project` fixture under this profile. CI compares against it, so any change to a resolved value, from this repository or from odoo-nix, is a reviewed diff. Against the newest allowed odoo-nix release, CI accepts options that release adds beyond the pinned one, and fails on any value that moves or any new module that is on. |
 | [`resolved.addons.snapshot.json`](resolved.addons.snapshot.json) | The same for the `standards-addons` fixture: odoo-nix derives part of the configuration from the shape, so each shape has its own snapshot. |
 | [`scripts/check.sh`](scripts/check.sh) | The checks CI runs: `odoo-nix profile validate`; for each fixture, the snapshot comparison (with [`scripts/compare_snapshot.py`](scripts/compare_snapshot.py) for the newest release) and an offline `odoo-nix sync --write` then `--check` with this profile; then `fleet.json`, against odoo-nix's fleet schema and the rules in [`scripts/check_fleet.py`](scripts/check_fleet.py). |
-| [`flake.nix`](flake.nix) | Pins the odoo-nix the checks run against (the `v2.3.0` tag). Dependabot moves it within the major. `flake.lock` is added once that tag exists: until then the flake cannot be locked. |
+| [`flake.nix`](flake.nix) | Pins the odoo-nix the checks run against (the `v2.4.0` tag). Dependabot moves it within the major. `flake.lock` is added once that tag exists: until then the flake cannot be locked. |
 | [`repo-policy/`](repo-policy) | This repository's own settings and rulesets, for `odoo-nix repo apply --policy-dir repo-policy Avunu/odoo-standards-profile` (`--dry-run` first shows the changes). |
 | `assets/icons/` | Each fleet repository's icon, which all of its addons share: `<repo>.png` (256 px, committed in each addon as `static/description/icon.png`), `<repo>.svg` (the same tile, committed as `static/description/icon.svg`) and `<repo>-symbolic.svg` (the 32 px glyph in `currentColor` both are drawn from). A repository sets `src-icon = "assets/icons/<repo>.png"` in `[tool.odoo-nix.icons]`, and `odoo-nix check icons --fix` then runs `oca-gen-addon-icon --src-icon=<profile>/assets/icons/<repo>.png` for each addon without a `static/description/icon.png`. |
 | `templates/` | Template overrides that odoo-nix reads from the profile directory (`<profile>/templates/`), so they travel with each profile release. None yet: every managed file comes from odoo-nix's own templates. Only overridable templates and `[[extra-files]]` templates may live there, which is why the icons are under `assets/`. |
@@ -50,7 +50,7 @@ The profile format, the modules and the merge order are documented in odoo-nix's
 | `addon-manifest` | no author, OCA's licences, no website | author `Avunu LLC`, licences `AGPL-3` and `LGPL-3`, website `https://github.com/{repo}` |
 | `ide` | off | on: VS Code with Odoo LS, ruff and prettier; Pylance and ty off |
 | `commits` | off | on: conventional commits scoped by addon, plus `ci`, `deps`, `docs`, `main`, `release`, `tests`; no stacked pull requests |
-| `releases` | off | on, `develop+series` (below) |
+| `releases` | off | on, `series` (below) |
 | `packaging` | off | on: a whool `pyproject.toml` per addon |
 | `dependabot` | auto-merge by odoo-nix's decision table | auto-merge every Dependabot PR once its checks pass (`all`), and keep them up to date (`update-branches`) |
 | `ci` | `ubuntu-latest`, no App | `["self-hosted", "nixos"]`; the "Avunu CI" App: variable `AVUNU_CI_APP_ID` (its client ID), secret `AVUNU_CI_PRIVATE_KEY` |
@@ -84,14 +84,18 @@ profile = "github:Avunu/odoo-standards-profile/v1"
 odoo-nix works out the shape, the series (from `.odoo-series`) and the addons; the profile
 supplies everything else.
 
-**Release flow (`develop+series`).** Pull requests go to `develop`. After each merge,
-`odoo-release.yml` works out each changed addon's manifest version bump from the conventional
-commits since the series branch (`!` → major, `feat` → minor, `fix`/`perf` → patch, other types
-none), commits `chore(release): bump <addons>` to `develop` with the CI App's token and, once
-the required checks pass on that commit, fast-forwards the series branch named in
-`.odoo-series` (`18.0`), the branch other repositories install from. The series branch is
-never pushed to by hand. The first sync deletes `.github/workflows/mirror.yml`, which this
-flow replaces.
+**Release flow (`series`).** Each series branch (`18.0`, and `19.0` once there is one) is its
+own integration branch: pull requests go to the series they are for, so series are developed in
+parallel. A release is a tag, not a branch. After each merge, release-please (with the CI App's
+token) keeps one release PR open on that series, `chore(release): release 18.0`, carrying each
+changed addon's next version (from the conventional commits that touch it: `!` → major,
+`feat` → minor, `fix`/`perf` → patch, other types none) and its `CHANGELOG.md`; odoo-nix writes
+the versions into the manifests on the PR's branch. Merging the release PR tags each changed
+addon `<addon>-<series>.x.y.z` (`web_theme_carbon-18.0.1.0.2`) and publishes its GitHub release
+with the addon's zip (unpack it into an addons path, then install or `-u` it) and its wheel.
+An addon without a release yet gets one for the version it has when the flow first runs. See
+[odoo-nix's versioning docs](https://docs.avunu.net/odoo-nix/docs/standards/versioning/) for
+the details. The first sync deletes `.github/workflows/mirror.yml`, which an older flow used.
 
 A repository that differs from the fleet sets the difference in its own table; tables merge
 key by key over the profile, for example an addon kept out of the test run:
