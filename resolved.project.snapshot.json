@@ -70,7 +70,8 @@
       "exclude": []
     },
     "ide": {
-      "enable": true
+      "enable": true,
+      "agents": true
     },
     "tests": {
       "enable": true,

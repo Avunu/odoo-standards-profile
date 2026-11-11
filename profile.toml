@@ -14,10 +14,10 @@ schema = 1
 name = "avunu"
 description = "Avunu's Odoo standards: OCA rules with locked tools, conventional commits scoped by addon, series branches with per-addon release-please releases (tags, zips and wheels), auto-merged Dependabot, repo policy, READMEs and icons."
 # 2.3 is the first odoo-nix minor that ships the standards engine (odoo-nix-tools) and the
-# frozen `recommended@2.3`; 2.4 the series release flow this profile uses. The lower bound's
-# release tag is also the pin in flake.nix.
+# frozen `recommended@2.3`; 2.4 the series release flow this profile uses; 2.8 `ide.agents`.
+# The lower bound's release tag is also the pin in flake.nix.
 extends = "recommended@2.3"
-requires-odoo-nix = ">=2.4,<3"
+requires-odoo-nix = ">=2.8,<3"
 
 [org]
 publisher = "Avunu LLC"
@@ -37,6 +37,11 @@ website = "https://github.com/{repo}"       # every manifest's website
 
 [ide]
 enable = true                               # off in `recommended` (taste): Odoo LS, ruff and prettier in VS Code; Pylance and ty off
+# Coding agents: an AGENTS.md block with the checks to run before a push, CLAUDE.md pointing at
+# it, and Claude Code's hooks in .claude/settings.json (the git hooks installed at session
+# start, the lint gate before a push or a pull request, the pre-commit hooks on the changed
+# files when the agent stops).
+agents = true
 
 [commits]
 enable = true
