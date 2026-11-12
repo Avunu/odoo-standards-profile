@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/Avunu/odoo-standards-profile/compare/v1.1.0...v1.2.0) (2026-11-12)
+
+
+### Features
+
+* turn on ide.agents, with odoo-nix v2.8.0 ([#5](https://github.com/Avunu/odoo-standards-profile/issues/5)) ([23f44d3](https://github.com/Avunu/odoo-standards-profile/commit/23f44d35c497437e228215b0f0a20c4d81876fb9))
+
 ## [1.1.0](https://github.com/Avunu/odoo-standards-profile/compare/v1.0.0...v1.1.0) (2026-11-08)
 
 
