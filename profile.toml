@@ -15,9 +15,11 @@ name = "avunu"
 description = "Avunu's Odoo standards: OCA rules with locked tools, conventional commits scoped by addon, series branches with per-addon release-please releases (tags, zips and wheels), auto-merged Dependabot, repo policy, READMEs and icons."
 # 2.3 is the first odoo-nix minor that ships the standards engine (odoo-nix-tools) and the
 # frozen `recommended@2.3`; 2.4 the series release flow this profile uses; 2.8 `ide.agents`.
-# The lower bound's release tag is also the pin in flake.nix.
+# The lower bound's release tag is also the pin in flake.nix. 3.x is allowed: odoo-nix 3.0
+# changed its reusable CI workflows only, not the profile schema or `recommended@2.3`, and the
+# range spans both majors so repositories can take 3.0 one at a time.
 extends = "recommended@2.3"
-requires-odoo-nix = ">=2.8,<3"
+requires-odoo-nix = ">=2.8,<4"
 
 [org]
 publisher = "Avunu LLC"
