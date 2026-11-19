@@ -32,9 +32,13 @@ dev-docs-url = "https://docs.avunu.net/odoo-nix/docs/standards/"
 repo-url = "https://github.com/{repo}"
 
 [python-lint]
-# Avunu uses the OCA 18.0 rule set with no additions (18.0 is the fleet's only series today).
+# Avunu uses the OCA rule set for the series (18.0 is the fleet's only series today), and
+# ignores RUF012. Newer ruff turns it on by default, and in Odoo it flags _inherit,
+# _sql_constraints and the other class-level lists a model declares: the ORM reads them once
+# and never mutates them, and annotating each with ClassVar is not how Odoo code is written.
+# Odoo's own ruff.toml and OCA's rules for 19.0 and 20.0 ignore it for the same reason.
 extra-select = []
-ignore = []
+ignore = ["RUF012"]
 per-file-ignores = {}
 extend-exclude = []
 

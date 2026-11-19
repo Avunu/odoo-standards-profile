@@ -48,7 +48,9 @@
     "python-lint": {
       "enable": true,
       "extra-select": [],
-      "ignore": [],
+      "ignore": [
+        "RUF012"
+      ],
       "per-file-ignores": {},
       "extend-exclude": []
     },
