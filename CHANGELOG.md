@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/Avunu/odoo-standards-profile/compare/v1.2.0...v1.3.0) (2026-11-20)
+
+
+### Features
+
+* **fleet:** web-addons maintains 19.0 alongside 18.0 ([#14](https://github.com/Avunu/odoo-standards-profile/issues/14)) ([710e62e](https://github.com/Avunu/odoo-standards-profile/commit/710e62e30d9b9068666e479a8a2c8305af365dc5))
+
 ## [1.2.0](https://github.com/Avunu/odoo-standards-profile/compare/v1.1.0...v1.2.0) (2026-11-18)
 
 
