@@ -68,7 +68,7 @@
     {
       "repo": "Avunu/web-addons",
       "shape": "addons",
-      "branches": ["18.0"],
+      "branches": ["18.0", "19.0"],
       "private": false,
       "documentation": "https://docs.avunu.net/web-addons/"
     }
